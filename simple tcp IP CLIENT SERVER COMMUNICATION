@@ -1,0 +1,96 @@
+CODING:
+Server: tcpserver.c
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+#include<string.h>
+#include<string.h>
+#include<stdio.h>
+int main(int asrgc,char*argv[])
+{
+
+int bd,sd,ad;
+char buff[1024];
+struct sockaddr_in cliaddr,servaddr;
+socklen_t clilen;
+clilen=sizeof(cliaddr);
+bzero(&servaddr,sizeof(servaddr));
+
+/*Socket address structure*/
+
+servaddr.sin_family=AF_INET;
+servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+servaddr.sin_port=htons(1999);
+/*TCP socket is created, an Internet socket address structure is filled with wildcard address &
+server’s well known port*/
+sd=socket(AF_INET,SOCK_STREAM,0);
+
+/*Bind function assigns a local protocol address to the socket*/
+bd=bind(sd,(struct sockaddr*)&servaddr,sizeof(servaddr));
+/*Listen function specifies the maximum number of connections that kernel should queue for
+this socket*/
+listen(sd,5);
+printf("Server is running....\n");
+
+/*The server to return the next completed connection from the front of the
+completed connection Queue calls it*/
+
+ad=accept(sd,(struct sockaddr*)&cliaddr,&clilen);
+while(1)
+{
+bzero(&buff,sizeof(buff));
+
+/*Receiving the request message from the client*/
+recv(ad,buff,sizeof(buff),0);
+printf("Message received is %s\n",buff);
+}
+}
+Client: tcpclient.c
+#include<stdio.h>
+#include<string.h>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<unistd.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+int main(int argc,char * argv[])
+{
+int cd,sd,ad;
+char buff[1024];
+struct sockaddr_in cliaddr,servaddr;
+struct hostent *h;
+/*This function looks up a hostname and it returns a pointer to a hostent
+structure that contains all the IPV4 address*/
+
+h=gethostbyname(argv[1]);
+bzero(&servaddr,sizeof(servaddr));
+/*Socket address structure*/
+servaddr.sin_family=AF_INET;
+memcpy((char *)&servaddr.sin_addr.s_addr,h->h_addr_list[0],h->h_length);
+servaddr.sin_port = htons(1999);
+
+/*Creating a socket, assigning IP address and port number for that socket*/
+
+sd = socket(AF_INET,SOCK_STREAM,0);
+
+/*Connect establishes connection with the server using server IP address*/
+cd=connect(sd,(struct sockaddr*)&servaddr,sizeof(servaddr));
+while(1)
+{
+printf("Enter the message: \n");
+/*Reads the message from standard input*/
+fgets(buff,100,stdin);
+
+/*Send function is used on client side to send data given by user on client
+side to the server*/
+
+send(sd,buff,sizeof(buff)+1,0);
+printf("\n Data Sent ");
+//recv(sd,buff,strlen(buff)+1,0);
+printf("%s",buff);
+}
+
+}
